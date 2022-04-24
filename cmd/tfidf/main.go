@@ -38,5 +38,4 @@ func main() {
 
 	fmt.Println("--------------------------")
 	fmt.Printf("tfidf = %.3f\n", r.TFIDF)
-
 }

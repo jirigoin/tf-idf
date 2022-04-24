@@ -1,14 +1,15 @@
-package cli
+package tfidf
 
 import (
 	"bufio"
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
-func (t TF) Weigh(info Info) TF {
-	dir := filepath.Join(info.Root, info.File)
+func (t TF) Weigh(directory, file, word string) TF {
+	dir := filepath.Join(directory, file)
 	fi, err := os.OpenFile(dir, os.O_RDONLY, 0o111)
 	if err != nil {
 		panic(err)
@@ -28,7 +29,7 @@ func (t TF) Weigh(info Info) TF {
 		if n == 0 {
 			break
 		}
-		t.getStats(info.Word, buf[:n])
+		t.getStats(word, buf[:n])
 	}
 	t.tf()
 	return t
@@ -42,4 +43,17 @@ func (t *TF) getStats(searchedWord string, text []byte) {
 
 func (t *TF) tf() {
 	t.Score = float64(t.WordQuantity) / float64(t.TotalWords)
+}
+
+func stats(searchedWord string, text []byte) (exists bool, times int, totalWords int) {
+	tx := sanitize(text)
+	w := strings.ToLower(searchedWord)
+
+	times = strings.Count(tx, w)
+	if times > 0 {
+		exists = true
+	}
+	totalWords = len(strings.Split(tx, " "))
+
+	return
 }
