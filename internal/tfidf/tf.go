@@ -54,6 +54,5 @@ func stats(searchedWord string, text []byte) (exists bool, times int, totalWords
 		exists = true
 	}
 	totalWords = len(strings.Split(tx, " "))
-
 	return
 }

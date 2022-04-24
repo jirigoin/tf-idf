@@ -10,7 +10,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
-	"strings"
+
+	"github.com/jirigoin/tf-idf/internal/tfidf"
 )
 
 const (
@@ -19,12 +20,11 @@ const (
 )
 
 func InitFlags(f *Flags) {
-	flag.StringVar(&f.File, "file", defaultFile, "text file where the word gonna be search.")
-	flag.Usage = help
-	flag.Parse()
-
 	if len(os.Args) > 1 {
 		f.Word = os.Args[1]
+		flag.CommandLine.StringVar(&f.File, "file", defaultFile, "text file where the word gonna be search.")
+		flag.CommandLine.Usage = help
+		flag.CommandLine.Parse(os.Args[2:])
 	}
 	validateFlags(f)
 }
@@ -51,21 +51,20 @@ func Run(ctx context.Context, flags *Flags) (*Result, error) {
 }
 
 func compute(info Info) Result {
-	tf := TF{}
-	idf := IDF{}
+	tf := tfidf.TF{}
+	idf := tfidf.IDF{}
+	var documents []string
+	for _, v := range info.Documents {
+		documents = append(documents, v.Name)
+	}
+
 	r := Result{
 		Info: info,
-		TF:   tf.Weigh(info),
-		IDF:  idf.Weigh(info),
+		TF:   tf.Weigh(info.Root, info.File, info.Word),
+		IDF:  idf.Weigh(info.Root, info.Word, documents),
 	}
 	r.TFIDF = r.TF.Score * r.IDF.Score
 	return r
-}
-
-func sanitize(text []byte) string {
-	ts := strings.ReplaceAll(string(text), "\n", " ")
-	ts = strings.ToLower(ts)
-	return strings.TrimRight(ts, " ")
 }
 
 func validateFlags(f *Flags) {
@@ -82,25 +81,9 @@ func help() {
 	flag.PrintDefaults()
 }
 
-func stats(searchedWord string, text []byte) (exists bool, times int, totalWords int) {
-	tx := sanitize(text)
-	w := strings.ToLower(searchedWord)
-
-	times = strings.Count(tx, w)
-	if times > 0 {
-		exists = true
-	}
-	totalWords = len(strings.Split(tx, " "))
-
-	return
-}
-
 func (i *Info) New(flag *Flags) Info {
 	_, here, _, _ := runtime.Caller(0)
-	dir := filepath.Join(filepath.Dir(here), "../..")
-	if flag.File == defaultFile {
-		dir = filepath.Join(dir, "/data")
-	}
+	dir := filepath.Join(filepath.Dir(here), "../../data")
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
 		log.Fatal(err)

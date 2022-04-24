@@ -1,5 +1,9 @@
 package cli
 
+import (
+	"github.com/jirigoin/tf-idf/internal/tfidf"
+)
+
 type Flags struct {
 	Word string
 	File string
@@ -15,25 +19,13 @@ type Info struct {
 
 type Result struct {
 	Info  Info
-	TF    TF
-	IDF   IDF
+	TF    tfidf.TF
+	IDF   tfidf.IDF
 	TFIDF float64
 }
 
 type Weigher interface {
 	Weigh(info Info) Weigher
-}
-
-type TF struct {
-	TotalWords   int
-	WordQuantity int
-	Score        float64
-}
-
-type IDF struct {
-	TotalFiles int
-	Df         int
-	Score      float64
 }
 
 type Document struct {
